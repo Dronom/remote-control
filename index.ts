@@ -1,5 +1,4 @@
 import { httpServer } from './src/http_server/index';
-import robot from 'robotjs';
 import { WebSocketServer } from 'ws';
 import { commandHandler } from './src/commandHandler';
 const HTTP_PORT = 3000;
@@ -16,8 +15,6 @@ wss.on('connection', (ws) => {
     const [command, ...args] = data.toString().split(' ');
     try {
       commandHandler(command, args, ws);
-      const { x, y } = robot.getMousePos();
-      ws.send(`${command} ${x},${y}`);
     } catch (err) {
       ws.send(err);
     }

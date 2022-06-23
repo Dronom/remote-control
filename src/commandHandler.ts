@@ -1,6 +1,6 @@
 import robot from 'robotjs';
-import Jimp from 'jimp';
 import { drawCircle, drawRectangle } from './draw';
+import { printScreenHandler } from './printScreenHandler';
 
 export const commandHandler = async (
   command: string,
@@ -10,48 +10,44 @@ export const commandHandler = async (
   const { x, y } = robot.getMousePos();
   const argsToNumber = args.map((arg) => Number(arg));
   switch (command) {
+    case 'mouse_position':
+      ws.send(`mouse_position ${x},${y} \0`);
+      break;
     case 'mouse_up':
       robot.moveMouse(x, y - argsToNumber[0]);
+      ws.send(`mouse_up ${y - argsToNumber[0]} \0`);
       break;
     case 'mouse_down':
       robot.moveMouse(x, y + argsToNumber[0]);
+      ws.send(`mouse_down ${y + argsToNumber[0]} \0`);
       break;
     case 'mouse_left':
       robot.moveMouse(x - argsToNumber[0], y);
+      ws.send(`mouse_left ${x - argsToNumber[0]} \0`);
       break;
     case 'mouse_right':
       robot.moveMouse(x + argsToNumber[0], y);
+      ws.send(`mouse_right ${x + argsToNumber[0]} \0`);
       break;
     case 'draw_circle':
       const radius = argsToNumber[0];
       drawCircle(x, y, radius);
+      ws.send(`draw_circle ${radius} \0`);
       break;
     case 'draw_square': {
       const [width] = argsToNumber;
       drawRectangle(x, y, width, width);
+      ws.send(`draw_square \0`);
       break;
     }
     case 'draw_rectangle':
       const [width, height] = argsToNumber;
       drawRectangle(x, y, width, height);
+      ws.send(`draw_square ${width}\0`);
       break;
     case 'prnt_scrn':
-      const xSize = 200;
-      const ySize = 200;
-      const screen = robot.screen.capture(
-        x - xSize / 2,
-        y - ySize / 2,
-        xSize,
-        ySize
-      );
-      const image = new Jimp({ data: screen.image, width: 200, height: 200 });
-
-      const imageBuffer = await image.getBase64Async('image/png');
-
-      const splitted = imageBuffer.split(',');
-      const [, base64String] = splitted;
-
-      ws.send(`prnt_scrn ${base64String}`);
+      const base64String = await printScreenHandler(x, y);
+      ws.send(`prnt_scrn ${base64String} \0`);
       break;
     default:
       console.log('Unknown command:', command);
